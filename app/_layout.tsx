@@ -8,7 +8,7 @@ import "react-native-reanimated";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [loaded] = useFonts({
+  const [loaded, error] = useFonts({
     regular: require("../assets/fonts/regular.otf"),
     bold: require("../assets/fonts/bold.otf"),
     italic: require("../assets/fonts/italic.otf"),
@@ -16,11 +16,10 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (loaded) {
+    if (loaded || error) {
       SplashScreen.hideAsync();
     }
-    // console.log(loaded);
-  }, [loaded]);
+  }, [loaded, error]);
 
   if (!loaded) {
     return null;

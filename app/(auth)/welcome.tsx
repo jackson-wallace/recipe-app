@@ -28,7 +28,7 @@ export default function Welcome() {
           <View className="w-[32px] h-[4px] mx-1 bg-base-300 rounded-full" />
         }
         activeDot={
-          <View className="w-[32px] h-[4px] mx-1 bg-primary rounded-full" />
+          <View className="w-[32px] h-[4px] mx-1 bg-base-content opacity-50 rounded-full" />
         }
         onIndexChanged={(index) => setActiveIndex(index)}
       >
