@@ -37,12 +37,13 @@ export type User = {
   profile_picture?: string;
   bio?: string;
   created_at: string; // ISO Date string
+  last_sign_in_at: string; // ISO Date string
 };
 
 // Followers Table
 export type Follower = {
-  follower_id: number; // ID of the user following
-  followed_id: number; // ID of the user being followed
+  follower_id: number; // User who follows
+  followed_id: number; // User being followed
   followed_at: string; // ISO Date string
 };
 
@@ -51,6 +52,7 @@ export type Recipe = {
   recipe_id: number;
   user_id: number; // Creator of the recipe
   title: string;
+  description: string;
   estimated_time_to_make: number; // In minutes
   servings: number;
   picture?: string;
@@ -77,7 +79,7 @@ export type RecipeInstruction = {
 export type Review = {
   review_id: number;
   recipe_id: number;
-  user_id: number; // Reviewer
+  user_id: number;
   title: string;
   body: string;
   rating: number; // Between 1 and 5
@@ -104,7 +106,7 @@ export type Tag = {
 // Books (Lists) Table
 export type Book = {
   book_id: number;
-  user_id: number; // Creator of the book (list)
+  user_id: number; // Creator of the list
   name: string;
   description?: string;
   created_at: string; // ISO Date string
@@ -122,7 +124,7 @@ export type LikeDislike = {
   like_dislike_id: number;
   liker_user_id: number;
   liked_disliked_entity_type: "recipe" | "review" | "book";
-  entity_id: number; // Can refer to either a recipe, review, or book
+  entity_id: number; // ID of the liked/disliked entity (Recipe, Review, or Book)
   liked_disliked: "like" | "dislike";
   timestamp: string; // ISO Date string
 };
