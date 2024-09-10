@@ -8,23 +8,26 @@ import {
   View,
   Modal,
   Alert,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { faGoogle } from "@fortawesome/free-brands-svg-icons/faGoogle";
+import { faApple } from "@fortawesome/free-brands-svg-icons/faApple";
 import { faPhone } from "@fortawesome/free-solid-svg-icons/faPhone";
 import { router } from "expo-router";
 import { useState } from "react";
 import { supabase } from "@/utils/supabase";
+import * as AppleAuthentication from "expo-apple-authentication";
 
 export default function AuthForm({ isSignUp }: { isSignUp: boolean }) {
   const [modalVisible, setModalVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loadingOAuth, setLoadingOAuth] = useState(false);
+  const [loadingPhoneAuth, setLoadingPhoneAuth] = useState(false);
   const [name, setName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
 
   const handleLoginWithOTP = async () => {
-    // setLoading(true);
+    setLoadingPhoneAuth(true);
     // Validate name and phone number
     if (!phoneNumber) {
       Alert.alert("Phone number is required.");
@@ -82,7 +85,7 @@ export default function AuthForm({ isSignUp }: { isSignUp: boolean }) {
     }
 
     setModalVisible(false);
-    console.log("data:", data);
+    setLoadingPhoneAuth(false);
   };
 
   const handleChangeTextOTP = (value: string) => {
@@ -93,9 +96,55 @@ export default function AuthForm({ isSignUp }: { isSignUp: boolean }) {
   };
 
   const handleLoginWithOAuth = async () => {
-    setLoading(true);
+    setLoadingOAuth(true);
+    if (Platform.OS === "ios") {
+      try {
+        const credential = await AppleAuthentication.signInAsync({
+          requestedScopes: [
+            AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+            AppleAuthentication.AppleAuthenticationScope.EMAIL,
+          ],
+        });
 
-    setLoading(false);
+        console.log(JSON.stringify(credential, null, 2));
+        // Sign in via Supabase Auth.
+        if (credential.identityToken) {
+          const {
+            error,
+            data: { user },
+          } = await supabase.auth.signInWithIdToken({
+            provider: "apple",
+            token: credential.identityToken,
+          });
+          console.log(JSON.stringify({ error, user }, null, 2));
+          if (!error) {
+            // User is signed in.
+            console.log("User is signed in.");
+
+            // Check if user exists in DB
+            if (isSignUp) {
+              // if user does not exist, create a new user
+              // if user does exist, redirect to sign-in
+            } else {
+              // if user does not exist, redirect to sign-up
+              // if user does exist, redirect to home
+            }
+          }
+        } else {
+          Alert.alert("No identityToken.");
+          throw new Error("No identityToken.");
+        }
+      } catch (e) {
+        // @ts-ignore
+        if (e.code === "ERR_REQUEST_CANCELED") {
+          // handle that the user canceled the sign-in flow
+        } else {
+          // handle other errors
+          Alert.alert("Error", (e as Error).message);
+        }
+      }
+    }
+    setLoadingOAuth(false);
   };
 
   return (
@@ -136,6 +185,7 @@ export default function AuthForm({ isSignUp }: { isSignUp: boolean }) {
           iconLeft={faPhone}
           iconColor="#EDE6D4"
           onPress={handleLoginWithOTP}
+          disabled={loadingPhoneAuth || loadingOAuth}
         />
 
         <View className="flex flex-row justify-center items-center w-11/12 mt-4 overflow-hidden">
@@ -146,16 +196,18 @@ export default function AuthForm({ isSignUp }: { isSignUp: boolean }) {
 
         {/* OAuth Button */}
         <CustomButton
-          title="Login with Google"
+          title="Login with Apple"
           className="mt-4 w-11/12"
-          iconLeft={faGoogle}
+          iconLeft={faApple}
           iconColor="#282425"
           onPress={handleLoginWithOAuth}
+          disabled={loadingPhoneAuth || loadingOAuth}
         />
         {isSignUp ? (
           <TouchableOpacity
             className="mt-6"
             onPress={() => router.replace("/(auth)/sign-in")}
+            disabled={loadingPhoneAuth || loadingOAuth}
           >
             <Text className="">Login to existing account</Text>
           </TouchableOpacity>
@@ -163,6 +215,7 @@ export default function AuthForm({ isSignUp }: { isSignUp: boolean }) {
           <TouchableOpacity
             className="mt-6"
             onPress={() => router.replace("/(auth)/sign-up")}
+            disabled={loadingPhoneAuth || loadingOAuth}
           >
             <Text className="">Create a new account</Text>
           </TouchableOpacity>
