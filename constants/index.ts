@@ -1,9 +1,13 @@
 import splash from "@/assets/images/splash2.jpg";
 import magnifyingGlass from "@/assets/images/magnifying-glass.jpg";
+import books from "@/assets/images/books.jpg";
+import chefHat from "@/assets/images/chef-hat.jpg";
 
 export const images = {
   splash,
   magnifyingGlass,
+  books,
+  chefHat,
 };
 
 export const onboarding = [
@@ -19,13 +23,13 @@ export const onboarding = [
     title: "Create cookbooks",
     description:
       "Just like playlists - save your favorites, and share delicious finds with friends and family.",
-    image: images.magnifyingGlass,
+    image: images.books,
   },
   {
     id: 3,
     title: "Develop your skills",
     description:
       "Improve your culinary skills by cooking and reviewing a variety of recipes!",
-    image: images.magnifyingGlass,
+    image: images.chefHat,
   },
 ];
