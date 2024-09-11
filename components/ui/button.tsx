@@ -1,4 +1,4 @@
-import { TouchableOpacity, Text, View } from "react-native";
+import { TouchableOpacity, Text, View, ActivityIndicator } from "react-native";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 
 import { CustomButtonProps } from "@/types/type";
@@ -57,6 +57,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   iconRight,
   iconColor,
   className,
+  loading,
   ...props
 }) => {
   return (
@@ -67,16 +68,24 @@ const CustomButton: React.FC<CustomButtonProps> = ({
       onPress={onPress}
       {...props}
     >
-      <View className="flex flex-row space-x-2 items-center justify-center">
-        {iconLeft && <FontAwesomeIcon icon={iconLeft} color={iconColor} />}
-        <Text
-          className={`text-center text-md font-bold ${getTextVariantStyle(
-            variant
-          )}`}
-        >
-          {title}
-        </Text>
-        {iconRight && <FontAwesomeIcon icon={iconRight} color={iconColor} />}
+      <View className="items-center justify-center">
+        {loading ? (
+          <ActivityIndicator color={iconColor} />
+        ) : (
+          <View className="flex flex-row space-x-2 ">
+            {iconLeft && <FontAwesomeIcon icon={iconLeft} color={iconColor} />}
+            <Text
+              className={`text-center text-md font-bold ${getTextVariantStyle(
+                variant
+              )}`}
+            >
+              {title}
+            </Text>
+            {iconRight && (
+              <FontAwesomeIcon icon={iconRight} color={iconColor} />
+            )}
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );
