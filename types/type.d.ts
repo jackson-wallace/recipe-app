@@ -15,6 +15,7 @@ declare interface CustomButtonProps extends TouchableOpacityProps {
   iconRight?: IconDefinition;
   iconColor?: string;
   className?: string;
+  loading?: boolean;
 }
 
 declare interface CustomTextInputProps extends TextInputProps {
@@ -57,6 +58,7 @@ export type Recipe = {
   servings: number;
   picture?: string;
   created_at: string; // ISO Date string
+  img_url?: string;
 };
 
 // Recipe_Ingredients Table
@@ -84,6 +86,7 @@ export type Review = {
   body: string;
   rating: number; // Between 1 and 5
   created_at: string; // ISO Date string
+  img_url?: string;
 };
 
 // Ingredients Table
