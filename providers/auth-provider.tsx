@@ -6,12 +6,14 @@ import {
   ReactNode,
 } from "react";
 import { supabase } from "@/utils/supabase";
-import { Session, User } from "@supabase/supabase-js";
+import { Session } from "@supabase/supabase-js";
+import { User } from "@/types/type";
 
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  getUserFromDB: () => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,6 +31,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const getUserFromDB = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", session?.user?.id);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      console.log("User data:", data[0]);
+      if (data.length > 1) {
+        console.warn("Multiple user records found, returning the first one.");
+        return data[0] as User;
+      } else if (data[0] === undefined) {
+        return null;
+      } else {
+        return data[0] as User;
+      }
+    } catch (error) {
+      return null;
+    }
+  };
+
   useEffect(() => {
     // Check for an active session at the start
     const initSession = async () => {
@@ -36,7 +63,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         data: { session },
       } = await supabase.auth.getSession();
       setSession(session);
-      setUser(session?.user || null);
+      if (session) {
+        const userInDB = await getUserFromDB();
+        setUser(userInDB);
+      } else {
+        setUser(null);
+      }
+
       setLoading(false);
     };
 
@@ -44,9 +77,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Set up the auth state change listener
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setSession(session);
-        setUser(session?.user || null);
+        if (session) {
+          const userInDB = await getUserFromDB();
+          setUser(userInDB);
+        } else {
+          setUser(null);
+        }
       }
     );
 
@@ -57,7 +95,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, user, loading }}>
+    <AuthContext.Provider value={{ session, user, loading, getUserFromDB }}>
       {!loading && children}
     </AuthContext.Provider>
   );

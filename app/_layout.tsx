@@ -1,3 +1,4 @@
+import { AuthProvider, useAuth } from "@/providers/auth-provider";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -7,8 +8,9 @@ import "react-native-reanimated";
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
-  const [loaded, error] = useFonts({
+function RootLayoutComponent() {
+  const { loading: authLoading } = useAuth(); // Access the loading state from AuthProvider
+  const [fontsLoaded, fontsError] = useFonts({
     regular: require("../assets/fonts/regular.otf"),
     bold: require("../assets/fonts/bold.otf"),
     italic: require("../assets/fonts/italic.otf"),
@@ -16,12 +18,13 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (loaded || error) {
-      SplashScreen.hideAsync();
+    if ((fontsLoaded || fontsError) && !authLoading) {
+      SplashScreen.hideAsync(); // Hide the splash screen once both fonts and auth are ready
     }
-  }, [loaded, error]);
+  }, [fontsLoaded, fontsError, authLoading]);
 
-  if (!loaded) {
+  // Keep showing the splash screen until both fonts and auth are ready
+  if (!fontsLoaded || authLoading) {
     return null;
   }
 
@@ -32,5 +35,13 @@ export default function RootLayout() {
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="+not-found" />
     </Stack>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootLayoutComponent />
+    </AuthProvider>
   );
 }

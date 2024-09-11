@@ -33,12 +33,12 @@ declare interface CustomTextInputProps extends TextInputProps {
 export type User = {
   user_id: number;
   username: string;
-  handle: string;
+  handle?: string;
   name?: string;
   profile_picture?: string;
   bio?: string;
-  created_at: string; // ISO Date string
-  last_sign_in_at: string; // ISO Date string
+  created_at?: string; // ISO Date string
+  last_sign_in_at?: string; // ISO Date string
 };
 
 // Followers Table

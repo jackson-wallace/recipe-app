@@ -1,7 +1,10 @@
+import { useAuth } from "@/providers/auth-provider";
 import { Redirect, Href } from "expo-router";
 
 const Page = () => {
-  if (false) return <Redirect href={"/(root)/(tabs)/feed" as Href} />;
+  const { session, user } = useAuth();
+
+  if (session && user) return <Redirect href={"/(root)/(tabs)/feed" as Href} />;
 
   return <Redirect href={"/(auth)/welcome" as Href} />;
 };
