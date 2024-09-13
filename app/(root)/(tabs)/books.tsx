@@ -3,6 +3,7 @@ import { View, Text, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "@/utils/supabase";
 import { Recipe, RecipeIngredient, RecipeStep } from "@/types/type"; 
+import { fetchRecipes, fetchIngredientsForRecipe, fetchStepsForRecipe } from "@/utils/recipe-service";
 
 export default function BooksTab() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -10,96 +11,38 @@ export default function BooksTab() {
   const [steps, setSteps] = useState<{ [key: string]: RecipeStep[] }>({});
   const [loading, setLoading] = useState(true);
 
-  // Function to fetch recipes for the current user
-  const fetchRecipes = async () => {
+  const loadRecipes = async () => {
     setLoading(true);
-    // Get the authenticated user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (userError || !user) {
-      console.error("Error fetching user:", userError);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       setLoading(false);
       return;
     }
 
-   // fetch recipes for the authenticated user
-    const { data: recipeData, error: recipeError } = await supabase
-      .from("recipe") // Assuming the table name is Recipe
-      .select("*")
-      .eq("user_id", user.id); // Fetch recipes for the authenticated user
+    const recipeData = await fetchRecipes(user.id);
 
-    if (recipeError) {
-      console.error("Error fetching recipes:", recipeError);
-    } else {
-      setRecipes(recipeData as Recipe[]);  
-      // fetch ingredients and steps for each recipe
-      recipeData.forEach(async (recipe: Recipe) => {
-        await fetchIngredientsForRecipe(recipe.id);
-        await fetchStepsForRecipe(recipe.id);
-      });  
-    }
+    setRecipes(recipeData);
+    recipeData.forEach(async (recipe: Recipe) => {
+      const recipeIngredients = await fetchIngredientsForRecipe(recipe.id);
+      const recipeSteps = await fetchStepsForRecipe(recipe.id);
+
+      setIngredients((prev) => ({ ...prev, [recipe.id]: recipeIngredients }));
+      setSteps((prev) => ({ ...prev, [recipe.id]: recipeSteps }));
+    });
+
     setLoading(false);
   };
-  const fetchIngredientsForRecipe = async (recipe_id: number) => {
-    // Fetch ingredients for the given recipe
-    const { data, error } = await supabase
-      .from("recipe_ingredient")
-      .select(
-        `
-        ingredient:ingredient_id(name), 
-        quantity, 
-        unit:unit_id(name, abbreviation)
-        `
-      )
-      .eq("recipe_id", recipe_id);
-      console.log('Fetched ingredients:', data); // Log the response
 
-    if (error) {
-      console.error("Error fetching ingredients:", error);
-    } else {
-      const mappedIngredients: RecipeIngredient[] = data.map((item: any) => ({
-        recipe_id: recipe_id,
-        ingredient_id: item.ingredient_id,
-        ingredient_name: item.ingredient.name,
-        quantity: item.quantity,
-        unit_name: item.unit.name,
-        unit_abbreviation: item.unit.abbreviation,
-      }));
-      console.log('Mapped ingredients: ', mappedIngredients)
-      setIngredients((prev) => ({ ...prev, [recipe_id]: mappedIngredients }));
-
-    }
-  };
-
-  const fetchStepsForRecipe = async (recipe_id:number) => {
-    const { data, error } = await supabase
-        .from("recipe_step")
-        .select("*")
-        .eq("recipe_id", recipe_id)
-        .order("step_number", { ascending: true }); // Order steps by step_number
-
-    if (error) {
-      console.error("Error fetching steps:", error);
-    } else {
-      const mappedSteps: RecipeStep[] = data.map((step: any) => ({
-        id: step.id,
-        recipe_id: step.recipe_id,
-        step_number: step.step_number,
-        instruction: step.instruction,
-      }));
-
-      setSteps((prev) => ({ ...prev, [recipe_id]: mappedSteps }));
-    }
-  }
-  // Use effect to fetch the recipes on component mount
   useEffect(() => {
-    fetchRecipes();
+    loadRecipes();
   }, []);
 
   if (loading) {
-    return <Text>Loading...</Text>; // Simple loading state
+    return <Text>Loading...</Text>;
   }
-return (
+
+  return (
     <ScrollView>
       <View className="p-4">
         {recipes.length > 0 ? (
