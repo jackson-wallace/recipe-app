@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { faApple } from "@fortawesome/free-brands-svg-icons/faApple";
 import { faPhone } from "@fortawesome/free-solid-svg-icons/faPhone";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/utils/supabase";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useAuth } from "@/providers/auth-provider";
@@ -25,10 +25,31 @@ export default function AuthForm({ isSignUp }: { isSignUp: boolean }) {
   const [loadingPhoneAuth, setLoadingPhoneAuth] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
+  const [countdown, setCountdown] = useState(60);
+  const [canResend, setCanResend] = useState(false);
 
   const { getUserFromDB } = useAuth();
 
-  const handleSendWithOTP = async () => {
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (modalVisible) {
+      setCountdown(60);
+      setCanResend(false);
+      timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev === 1) {
+            clearInterval(timer);
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [modalVisible]);
+
+  const handleSendOTP = async () => {
     setLoadingPhoneAuth(true);
     try {
       // Validate name and phone number
@@ -52,6 +73,23 @@ export default function AuthForm({ isSignUp }: { isSignUp: boolean }) {
     } catch (error) {
       Alert.alert("Error", (error as Error).message);
       setLoadingPhoneAuth(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    console.log("Resend OTP");
+    console.log(canResend);
+    console.log(phoneNumber);
+    if (canResend) {
+      // Your resend OTP logic here
+      const { error } = await supabase.auth.resend({
+        type: "sms",
+        phone: "+1" + phoneNumber,
+      });
+
+      if (error) {
+        Alert.alert("Error", error.message);
+      }
     }
   };
 
@@ -184,7 +222,7 @@ export default function AuthForm({ isSignUp }: { isSignUp: boolean }) {
           variant="neutral"
           iconLeft={faPhone}
           iconColor="#EDE6D4"
-          onPress={handleSendWithOTP}
+          onPress={handleSendOTP}
           disabled={loadingPhoneAuth || loadingOAuth}
           loading={loadingPhoneAuth}
         />
@@ -251,8 +289,8 @@ export default function AuthForm({ isSignUp }: { isSignUp: boolean }) {
                 onChangeText={(value) => setOtp(value)}
               />
               <View className="mt-8 h-8">
-                {true ? (
-                  <TouchableOpacity>
+                {canResend ? (
+                  <TouchableOpacity onPress={handleResendOTP}>
                     <Text className="flex items-center justify-center text-base-content font-bold">
                       Resend OTP
                     </Text>
@@ -260,16 +298,30 @@ export default function AuthForm({ isSignUp }: { isSignUp: boolean }) {
                 ) : (
                   <View className="flex flex-col items-center">
                     <Text className="text-base-content">Resend in</Text>
-                    <Text className="text-base-content font-bold">00:30</Text>
+                    <Text className="text-base-content font-bold">
+                      {`${countdown < 10 ? `0${countdown}` : countdown}`}
+                    </Text>
                   </View>
                 )}
               </View>
-              <CustomButton
-                title="Verify"
-                className="absolute bottom-10 mb-4 w-11/12"
-                variant="neutral"
-                onPress={handleVerifyOTP}
-              />
+              {otp.length < 6 ? (
+                <CustomButton
+                  title="Close"
+                  className="absolute bottom-10 mb-4 w-11/12"
+                  variant="neutral"
+                  onPress={() => {
+                    setModalVisible(false);
+                    setLoadingPhoneAuth(false);
+                  }}
+                />
+              ) : (
+                <CustomButton
+                  title="Verify"
+                  className="absolute bottom-10 mb-4 w-11/12"
+                  variant="neutral"
+                  onPress={handleVerifyOTP}
+                />
+              )}
             </View>
           </TouchableWithoutFeedback>
         </Modal>
@@ -277,9 +329,3 @@ export default function AuthForm({ isSignUp }: { isSignUp: boolean }) {
     </TouchableWithoutFeedback>
   );
 }
-
-// Resend an otp
-// const { error } = await supabase.auth.resend({
-//   type: 'sms',
-//   phone: '1234567890'
-// })
