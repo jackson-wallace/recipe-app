@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, TouchableWithoutFeedback, Keyboard, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "@/utils/supabase";
 import { Recipe, RecipeIngredient, RecipeStep } from "@/types/type"; 
 import { fetchRecipes, fetchIngredientsForRecipe, fetchStepsForRecipe } from "@/utils/recipe-service";
+import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
+import { faPenToSquare } from "@fortawesome/free-solid-svg-icons";
+import { faBell } from "@fortawesome/free-solid-svg-icons/faBell";
+
 
 export default function BooksTab() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -14,7 +18,7 @@ export default function BooksTab() {
   const loadRecipes = async () => {
     setLoading(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();   
     if (!user) {
       setLoading(false);
       return;
@@ -39,12 +43,25 @@ export default function BooksTab() {
   }, []);
 
   if (loading) {
-    return <Text>Loading...</Text>;
+    return (
+      <SafeAreaView className="flex h-full items-center justify-center bg-base-100 px-4">
+        <ActivityIndicator size="large" color="#000000" />
+        <Text>Loading recipes...</Text>
+      </SafeAreaView>
+    );
   }
 
   return (
-    <ScrollView>
-      <View className="p-4">
+    <SafeAreaView className="flex h-full items-center justify-start bg-base-100 px-4">
+      <View className="flex flex-row w-full items-center justify-between">
+        <Text className="text-2xl font-Bold mt-1 text-base-content">
+          Books
+        </Text>
+        <View className="w-14 flex flex-row justify-end">
+            <FontAwesomeIcon icon={faPenToSquare} size={24} color="#282425" />
+        </View>
+      </View>
+      <ScrollView>
         {recipes.length > 0 ? (
           recipes.map((recipe) => (
             <View key={recipe.id} className="mb-4">
@@ -58,7 +75,7 @@ export default function BooksTab() {
                 {ingredients[recipe.id]?.length > 0 ? (
                   ingredients[recipe.id].map((ingredient, index) => (
                     <View key={index} className="mb-2">
-                      <Text>{ingredient.quantity} {ingredient.unit_abbreviation} {ingredient.ingredient_name}</Text>
+                      <Text>{ingredient.quantity} {ingredient.unit_abbreviation} {ingredient.ingredient_name}</Text> 
                     </View>
                   ))
                 ) : (
@@ -84,7 +101,7 @@ export default function BooksTab() {
         ) : (
           <Text>No recipes found</Text>
         )}
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
