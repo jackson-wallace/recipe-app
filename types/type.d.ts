@@ -50,11 +50,10 @@ export type Follower = {
 
 // Recipes Table
 export type Recipe = {
-  recipe_id: number;
+  id: number;
   user_id: number; // Creator of the recipe
-  title: string;
-  description: string;
-  estimated_time_to_make: number; // In minutes
+  name: string;
+  preparation_time: number; // In minutes
   servings: number;
   picture?: string;
   created_at: string; // ISO Date string
@@ -65,16 +64,18 @@ export type Recipe = {
 export type RecipeIngredient = {
   recipe_id: number;
   ingredient_id: number;
+  ingredient_name : string;
   quantity: number;
-  unit: string;
+  unit_name: string;
+  unit_abbreviation: string;
 };
 
-// Recipe_Instructions Table
-export type RecipeInstruction = {
-  instruction_id: number;
+// Recipe_Step Table
+export type RecipeStep = {
+  id: number;
   recipe_id: number;
-  step_number: number;
-  instruction_text: string;
+  step_number: number; 
+  instruction: string;
 };
 
 // Reviews Table
@@ -91,13 +92,11 @@ export type Review = {
 
 // Ingredients Table
 export type Ingredient = {
-  ingredient_id: number;
+  id: number;
   name: string;
-  calories_per_unit: number;
-  note?: string;
-  rarity: "Common" | "Uncommon" | "Rare" | "Exotic";
-  created_at: string; // ISO Date string
+  abbreviation : string;
 };
+
 
 // Tags Table
 export type Tag = {
