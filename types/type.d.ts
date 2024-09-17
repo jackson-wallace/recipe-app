@@ -57,7 +57,7 @@ export type Recipe = {
   servings: number;
   picture?: string;
   created_at: string; // ISO Date string
-  img_url?: string;
+  image_url?: string;
 };
 
 // Recipe_Ingredients Table

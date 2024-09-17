@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, TouchableWithoutFeedback, Keyboard, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, Image, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "@/utils/supabase";
 import { Recipe, RecipeIngredient, RecipeStep } from "@/types/type"; 
 import { fetchRecipes, fetchIngredientsForRecipe, fetchStepsForRecipe } from "@/utils/recipe-service";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { faPenToSquare } from "@fortawesome/free-solid-svg-icons";
-import { faBell } from "@fortawesome/free-solid-svg-icons/faBell";
-
 
 export default function BooksTab() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -54,7 +52,7 @@ export default function BooksTab() {
   return (
     <SafeAreaView className="flex h-full items-center justify-start bg-base-100 px-4">
       <View className="flex flex-row w-full items-center justify-between">
-        <Text className="text-2xl font-Bold mt-1 text-base-content">
+        <Text className="text-2xl font-bold mt-1 text-base-content">
           Books
         </Text>
         <View className="w-14 flex flex-row justify-end">
@@ -65,6 +63,11 @@ export default function BooksTab() {
         {recipes.length > 0 ? (
           recipes.map((recipe) => (
             <View key={recipe.id} className="mb-4">
+              {/* Display recipe image */}
+              <Image 
+                source={{ uri: recipe.image_url || 'https://via.placeholder.com/150' }} 
+                style={{ width: '100%', height: 150, borderRadius: 8, marginBottom: 8 }} 
+              />
               <Text className="text-xl font-bold">{recipe.name}</Text>
               <Text className="text-base">Servings: {recipe.servings}</Text>
               <Text className="text-sm text-gray-500">Preparation Time: {recipe.preparation_time}</Text>
