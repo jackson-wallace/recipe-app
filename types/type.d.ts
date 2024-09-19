@@ -113,6 +113,7 @@ export type Book = {
   description?: string;
   is_default: boolean;
   default_type: string;
+  author: string; //username
   image_url?: string;
   num_recipes: number;
   created_at: string; // ISO Date string

@@ -31,19 +31,15 @@ export default function BooksTab() {
     // you can query using session?.user.id instead of doing await supabase.auth.getUser();
   // ex: .eq("user_id", session?.user.id)
   // roger. makes me do session?.user?.id
+  const loadBooks = async () => {
+    if (!session?.user?.id) return;
+    setLoading(true);
+    const books = await fetchCustomBooks(session?.user?.id);
+    setCustomBooks(books);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    async function loadBooks() {
-      if (!session?.user?.id) return;
-
-      setLoading(true);
-
-      // Fetch non-default books for the user
-      const books = await fetchCustomBooks(session?.user?.id);
-      setCustomBooks(books);
-
-      setLoading(false);
-    }
-
     loadBooks();
   }, [session]);
 
@@ -60,6 +56,7 @@ export default function BooksTab() {
       await addNewBook(session.user.id, newBookName); // Pass the user ID and book name
       setNewBookModalVisible(false); // Close the modal after adding the book
       setNewBookName(''); // Reset the input field
+      loadBooks();
     } catch (error) {
       console.error("Error adding new book:", error);
     }
@@ -219,7 +216,7 @@ export default function BooksTab() {
             </View>
           </TouchableWithoutFeedback>
         </Modal>
-        
+
         {/* NEW BOOK MODAL */}
         <Modal
           animationType="slide"
