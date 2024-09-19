@@ -144,7 +144,7 @@ export default function BooksTab() {
                 <View className="flex flex-col justify-center ml-2">
                   <Text className="font-bold text-md">{book.name}</Text>
                   <Text className="text-sm opacity-50 text-base-content">
-                    {book.num_recipes || 0} recipes
+                    {book.num_recipes || 0} recipes • {book.author}
                   </Text>
                 </View>
               </TouchableOpacity>
