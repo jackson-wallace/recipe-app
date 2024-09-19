@@ -12,25 +12,38 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { faPlus, faBookmark, faUtensils, faHeart, faSort, faCheck, faXmark } from "@fortawesome/free-solid-svg-icons";
+import {
+  faPlus,
+  faBookmark,
+  faUtensils,
+  faHeart,
+  faSort,
+  faCheck,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
 import Button from "@/components/ui/button";
 import CustomTextInput from "@/components/ui/text-input";
 import { useAuth } from "@/providers/auth-provider";
-import { fetchCustomBooks, fetchDefaultBooks, addNewBook } from "@/utils/book-service";
+import {
+  fetchCustomBooks,
+  fetchDefaultBooks,
+  addNewBook,
+} from "@/utils/book-service";
 import { Book } from "@/types/type";
 
 export default function BooksTab() {
   const [loading, setLoading] = useState(true);
   const [sortingModalVisible, setSortingModalVisible] = useState(false);
   const [newBookModalVisible, setNewBookModalVisible] = useState(false);
-  const [newBookName, setNewBookName] = useState('');
+  const [newBookName, setNewBookName] = useState("");
   const [selectedSortMethod, setSelectedSortMethod] = useState("Recents");
   const [customBooks, setCustomBooks] = useState<Book[]>([]); // Store non-default books
   const { session } = useAuth();
-  
-    // you can query using session?.user.id instead of doing await supabase.auth.getUser();
+
+  // you can query using session?.user.id instead of doing await supabase.auth.getUser();
   // ex: .eq("user_id", session?.user.id)
   // roger. makes me do session?.user?.id
+  // yeah thats chill
   useEffect(() => {
     async function loadBooks() {
       if (!session?.user?.id) return;
@@ -39,6 +52,8 @@ export default function BooksTab() {
 
       // Fetch non-default books for the user
       const books = await fetchCustomBooks(session?.user?.id);
+      // should add an updated_at column to the books table so that we can sort by recents
+      console.log(JSON.stringify(books, null, 2));
       setCustomBooks(books);
 
       setLoading(false);
@@ -59,9 +74,27 @@ export default function BooksTab() {
     try {
       await addNewBook(session.user.id, newBookName); // Pass the user ID and book name
       setNewBookModalVisible(false); // Close the modal after adding the book
-      setNewBookName(''); // Reset the input field
+      setNewBookName(""); // Reset the input field
     } catch (error) {
       console.error("Error adding new book:", error);
+    }
+  };
+
+  const sortBooksBySortMethod = (sortMethod: string) => {
+    switch (sortMethod) {
+      case "Recents":
+        return customBooks.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      case "Alphabetical":
+        return customBooks.sort((a, b) => a.name.localeCompare(b.name));
+      case "Creator":
+        return customBooks.sort((a, b) =>
+          a.user_id.toString().localeCompare(b.user_id.toString())
+        );
+      default:
+        return customBooks;
     }
   };
 
@@ -134,9 +167,14 @@ export default function BooksTab() {
             </View>
           ) : (
             customBooks.map((book, index) => (
-              <TouchableOpacity key={index} className="flex flex-row w-full my-1">
+              <TouchableOpacity
+                key={index}
+                className="flex flex-row w-full my-1"
+              >
                 <Image
-                  source={{ uri: book.image_url || "https://via.placeholder.com/100" }}
+                  source={{
+                    uri: book.image_url || "https://via.placeholder.com/100",
+                  }}
                   style={{
                     width: "22%",
                     height: undefined,
@@ -174,6 +212,7 @@ export default function BooksTab() {
                 <TouchableOpacity
                   onPress={() => {
                     setSelectedSortMethod("Recents");
+                    sortBooksBySortMethod("Recents");
                     setSortingModalVisible(false);
                   }}
                   className="mb-3 flex flex-row justify-between"
@@ -186,6 +225,7 @@ export default function BooksTab() {
                 <TouchableOpacity
                   onPress={() => {
                     setSelectedSortMethod("Alphabetical");
+                    sortBooksBySortMethod("Alphabetical");
                     setSortingModalVisible(false);
                   }}
                   className="mb-3 flex flex-row justify-between"
@@ -200,6 +240,7 @@ export default function BooksTab() {
                 <TouchableOpacity
                   onPress={() => {
                     setSelectedSortMethod("Creator");
+                    sortBooksBySortMethod("Creator");
                     setSortingModalVisible(false);
                   }}
                   className="mb-8 flex flex-row justify-between"
@@ -219,7 +260,7 @@ export default function BooksTab() {
             </View>
           </TouchableWithoutFeedback>
         </Modal>
-        
+
         {/* NEW BOOK MODAL */}
         <Modal
           animationType="slide"
@@ -233,15 +274,16 @@ export default function BooksTab() {
               onPress={() => setNewBookModalVisible(false)}
               className="w-full flex justify-start items-end absolute top-16 right-4"
             >
-              <FontAwesomeIcon icon={faXmark} size={24} />
+              <FontAwesomeIcon icon={faXmark} size={20} />
             </TouchableOpacity>
             <Text className="mb-4 font-Bold text-2xl">
               Give your new book a name
             </Text>
-            <CustomTextInput 
+            <CustomTextInput
               value={newBookName}
               onChangeText={setNewBookName}
-              inputStyle="text-center" />
+              inputStyle="text-center"
+            />
             <View className="flex flex-row w-full justify-around mt-6">
               <Button
                 title="Create"
