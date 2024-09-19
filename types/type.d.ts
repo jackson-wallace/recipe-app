@@ -111,6 +111,10 @@ export type Book = {
   user_id: number; // Creator of the list
   name: string;
   description?: string;
+  is_default: boolean;
+  default_type: string;
+  image_url?: string;
+  num_recipes: number;
   created_at: string; // ISO Date string
 };
 

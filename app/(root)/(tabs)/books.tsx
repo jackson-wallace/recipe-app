@@ -8,31 +8,62 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   TouchableOpacity,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { faPlus } from "@fortawesome/free-solid-svg-icons/faPlus";
-import { faBookmark } from "@fortawesome/free-solid-svg-icons/faBookmark";
-import { faUtensils } from "@fortawesome/free-solid-svg-icons/faUtensils";
-import { faHeart } from "@fortawesome/free-solid-svg-icons/faHeart";
-import { faSort } from "@fortawesome/free-solid-svg-icons/faSort";
-import { faCheck } from "@fortawesome/free-solid-svg-icons/faCheck";
-import { faXmark } from "@fortawesome/free-solid-svg-icons/faXmark";
-import { Modal } from "react-native";
+import { faPlus, faBookmark, faUtensils, faHeart, faSort, faCheck, faXmark } from "@fortawesome/free-solid-svg-icons";
 import Button from "@/components/ui/button";
 import CustomTextInput from "@/components/ui/text-input";
 import { useAuth } from "@/providers/auth-provider";
+import { fetchCustomBooks, fetchDefaultBooks, addNewBook } from "@/utils/book-service";
+import { Book } from "@/types/type";
 
 export default function BooksTab() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [sortingModalVisible, setSortingModalVisible] = useState(false);
   const [newBookModalVisible, setNewBookModalVisible] = useState(false);
+  const [newBookName, setNewBookName] = useState('');
   const [selectedSortMethod, setSelectedSortMethod] = useState("Recents");
-
+  const [customBooks, setCustomBooks] = useState<Book[]>([]); // Store non-default books
   const { session } = useAuth();
-
-  // you can query using session?.user.id instead of doing await supabase.auth.getUser();
+  
+    // you can query using session?.user.id instead of doing await supabase.auth.getUser();
   // ex: .eq("user_id", session?.user.id)
+  // roger. makes me do session?.user?.id
+  useEffect(() => {
+    async function loadBooks() {
+      if (!session?.user?.id) return;
+
+      setLoading(true);
+
+      // Fetch non-default books for the user
+      const books = await fetchCustomBooks(session?.user?.id);
+      setCustomBooks(books);
+
+      setLoading(false);
+    }
+
+    loadBooks();
+  }, [session]);
+
+  const handleAddNewBook = async () => {
+    if (!newBookName.trim()) {
+      // Handle empty book name case (optional)
+      return;
+    }
+    if (!session?.user?.id) {
+      console.error("User not authenticated");
+      return;
+    }
+    try {
+      await addNewBook(session.user.id, newBookName); // Pass the user ID and book name
+      setNewBookModalVisible(false); // Close the modal after adding the book
+      setNewBookName(''); // Reset the input field
+    } catch (error) {
+      console.error("Error adding new book:", error);
+    }
+  };
 
   if (loading) {
     return (
@@ -41,34 +72,6 @@ export default function BooksTab() {
       </SafeAreaView>
     );
   }
-
-  const booksTest = [
-    {
-      name: "Date Night",
-      numRecipes: "21",
-      image: "https://via.placeholder.com/100",
-      creator: "daviswestbrook",
-    },
-
-    {
-      name: "Easy",
-      numRecipes: "21",
-      image: "https://via.placeholder.com/100",
-      creator: "daviswestbrook",
-    },
-    {
-      name: "Good Macros",
-      numRecipes: "21",
-      image: "https://via.placeholder.com/100",
-      creator: "jacksonwallace",
-    },
-    {
-      name: "Cocktails",
-      numRecipes: "2100",
-      image: "https://via.placeholder.com/100",
-      creator: "jacksonwallace",
-    },
-  ];
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} className="flex-1">
@@ -114,15 +117,13 @@ export default function BooksTab() {
             >
               <FontAwesomeIcon icon={faSort} color="#282425" />
               <Text className="font-bold ml-2 text-base-content">
-                {/* Recents */}
-                {/* Creator, Alphabetical */}
                 {selectedSortMethod}
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Books */}
-          {booksTest.length === 0 ? (
+          {/* Custom Books from Database */}
+          {customBooks.length === 0 ? (
             <View className="flex justify-center items-center h-full">
               <Text>You haven't created any Books!</Text>
               <View className="flex flex-row mt-2 items-center">
@@ -132,15 +133,10 @@ export default function BooksTab() {
               </View>
             </View>
           ) : (
-            booksTest.map((book, index) => (
-              <TouchableOpacity
-                key={index}
-                className="flex flex-row w-full my-1"
-              >
+            customBooks.map((book, index) => (
+              <TouchableOpacity key={index} className="flex flex-row w-full my-1">
                 <Image
-                  source={{
-                    uri: book.image || "https://via.placeholder.com/100",
-                  }}
+                  source={{ uri: book.image_url || "https://via.placeholder.com/100" }}
                   style={{
                     width: "22%",
                     height: undefined,
@@ -151,7 +147,7 @@ export default function BooksTab() {
                 <View className="flex flex-col justify-center ml-2">
                   <Text className="font-bold text-md">{book.name}</Text>
                   <Text className="text-sm opacity-50 text-base-content">
-                    {book.numRecipes} recipes • {book.creator}
+                    {book.num_recipes || 0} recipes
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -223,7 +219,7 @@ export default function BooksTab() {
             </View>
           </TouchableWithoutFeedback>
         </Modal>
-
+        
         {/* NEW BOOK MODAL */}
         <Modal
           animationType="slide"
@@ -234,9 +230,7 @@ export default function BooksTab() {
         >
           <View className="flex-1 w-full justify-center items-center bg-base-100 px-4 relative">
             <TouchableOpacity
-              onPress={() => {
-                setNewBookModalVisible(false);
-              }}
+              onPress={() => setNewBookModalVisible(false)}
               className="w-full flex justify-start items-end absolute top-16 right-4"
             >
               <FontAwesomeIcon icon={faXmark} size={24} />
@@ -244,12 +238,15 @@ export default function BooksTab() {
             <Text className="mb-4 font-Bold text-2xl">
               Give your new book a name
             </Text>
-            <CustomTextInput inputStyle="text-center" />
+            <CustomTextInput 
+              value={newBookName}
+              onChangeText={setNewBookName}
+              inputStyle="text-center" />
             <View className="flex flex-row w-full justify-around mt-6">
               <Button
                 title="Create"
                 variant="neutral"
-                onPress={() => setNewBookModalVisible(false)}
+                onPress={handleAddNewBook}
                 className="mb-4 w-1/3"
               />
             </View>
