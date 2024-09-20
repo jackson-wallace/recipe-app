@@ -20,6 +20,7 @@ import {
   faSort,
   faCheck,
   faXmark,
+  faEllipsisVertical,
 } from "@fortawesome/free-solid-svg-icons";
 import Button from "@/components/ui/button";
 import CustomTextInput from "@/components/ui/text-input";
@@ -30,6 +31,7 @@ import {
   addNewBook,
 } from "@/utils/book-service";
 import { Book } from "@/types/type";
+import { Href, router } from "expo-router";
 
 export default function BooksTab() {
   const [loading, setLoading] = useState(true);
@@ -40,17 +42,15 @@ export default function BooksTab() {
   const [customBooks, setCustomBooks] = useState<Book[]>([]); // Store non-default books
   const { session } = useAuth();
 
-  // you can query using session?.user.id instead of doing await supabase.auth.getUser();
-  // ex: .eq("user_id", session?.user.id)
-  // roger. makes me do session?.user?.id
-  // yeah thats chill
   const loadBooks = async () => {
     if (!session?.user?.id) return;
     setLoading(true);
     const books = await fetchCustomBooks(session?.user?.id);
-      // should add an updated_at column to the books table so that we can sort by recents
-      console.log(JSON.stringify(books, null, 2));
-    setCustomBooks(books);
+    // should add an updated_at column to the books table so that we can sort by recents
+    const sortedBooks = sortBooksBySortMethod(books, selectedSortMethod);
+    console.log(JSON.stringify(sortedBooks, null, 2));
+
+    setCustomBooks(sortedBooks);
     setLoading(false);
   };
 
@@ -72,27 +72,26 @@ export default function BooksTab() {
       setNewBookModalVisible(false); // Close the modal after adding the book
       setNewBookName(""); // Reset the input field
       loadBooks();
-
     } catch (error) {
       console.error("Error adding new book:", error);
     }
   };
 
-  const sortBooksBySortMethod = (sortMethod: string) => {
+  const sortBooksBySortMethod = (books: Book[], sortMethod: string) => {
     switch (sortMethod) {
       case "Recents":
-        return customBooks.sort(
+        return books.sort(
           (a, b) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
       case "Alphabetical":
-        return customBooks.sort((a, b) => a.name.localeCompare(b.name));
+        return books.sort((a, b) => a.name.localeCompare(b.name));
       case "Creator":
-        return customBooks.sort((a, b) =>
+        return books.sort((a, b) =>
           a.user_id.toString().localeCompare(b.user_id.toString())
         );
       default:
-        return customBooks;
+        return books;
     }
   };
 
@@ -167,25 +166,36 @@ export default function BooksTab() {
             customBooks.map((book, index) => (
               <TouchableOpacity
                 key={index}
-                className="flex flex-row w-full my-1"
+                className="flex flex-row w-full my-2 justify-between items-center"
+                // Bad practice to pass entire book object as params
+                onPress={() => router.push(`/book/${book.id}` as Href)}
               >
-                <Image
-                  source={{
-                    uri: book.image_url || "https://via.placeholder.com/100",
-                  }}
-                  style={{
-                    width: "22%",
-                    height: undefined,
-                    aspectRatio: 1,
-                    borderRadius: 10,
-                  }}
-                />
-                <View className="flex flex-col justify-center ml-2">
-                  <Text className="font-bold text-md">{book.name}</Text>
-                  <Text className="text-sm opacity-50 text-base-content">
-                    {book.num_recipes || 0} recipes • {book.author}
-                  </Text>
+                <View className="flex flex-row">
+                  <Image
+                    source={{
+                      uri: book.image_url || "https://via.placeholder.com/100",
+                    }}
+                    style={{
+                      width: "22%",
+                      height: undefined,
+                      aspectRatio: 1,
+                      borderRadius: 10,
+                    }}
+                  />
+                  <View className="flex flex-col justify-center ml-2">
+                    <Text className="font-bold text-md">{book.name}</Text>
+                    <Text className="text-sm opacity-50 text-base-content">
+                      {book.num_recipes || 0} recipes • {book.author}
+                    </Text>
+                  </View>
                 </View>
+                <TouchableOpacity onPress={() => {}}>
+                  <FontAwesomeIcon
+                    icon={faEllipsisVertical}
+                    size={20}
+                    color="#A8A4A5"
+                  />
+                </TouchableOpacity>
               </TouchableOpacity>
             ))
           )}
@@ -210,7 +220,7 @@ export default function BooksTab() {
                 <TouchableOpacity
                   onPress={() => {
                     setSelectedSortMethod("Recents");
-                    sortBooksBySortMethod("Recents");
+                    sortBooksBySortMethod(customBooks, "Recents");
                     setSortingModalVisible(false);
                   }}
                   className="mb-3 flex flex-row justify-between"
@@ -223,7 +233,7 @@ export default function BooksTab() {
                 <TouchableOpacity
                   onPress={() => {
                     setSelectedSortMethod("Alphabetical");
-                    sortBooksBySortMethod("Alphabetical");
+                    sortBooksBySortMethod(customBooks, "Alphabetical");
                     setSortingModalVisible(false);
                   }}
                   className="mb-3 flex flex-row justify-between"
@@ -238,7 +248,7 @@ export default function BooksTab() {
                 <TouchableOpacity
                   onPress={() => {
                     setSelectedSortMethod("Creator");
-                    sortBooksBySortMethod("Creator");
+                    sortBooksBySortMethod(customBooks, "Creator");
                     setSortingModalVisible(false);
                   }}
                   className="mb-8 flex flex-row justify-between"
