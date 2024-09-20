@@ -1,9 +1,10 @@
-
 import { supabase } from "./supabase";
-import { Recipe, RecipeIngredient, RecipeStep } from "@/types/type"; 
+import { Recipe, RecipeIngredient, RecipeStep } from "@/types/type";
 
 // fetch recipes for the current user
-export const fetchRecipes = async (userId: string): Promise<Recipe[]> => {
+export const fetchRecipesByUserId = async (
+  userId: string
+): Promise<Recipe[]> => {
   const { data, error } = await supabase
     .from("recipe")
     .select("*")
@@ -17,15 +18,21 @@ export const fetchRecipes = async (userId: string): Promise<Recipe[]> => {
   return data;
 };
 
+// Need to make fetchRecipeByBookId for book/[id].tsx
+
 // fetch ingredients for a given recipe
-export const fetchIngredientsForRecipe = async (recipe_id: number): Promise<RecipeIngredient[]> => {
+export const fetchIngredientsForRecipe = async (
+  recipe_id: number
+): Promise<RecipeIngredient[]> => {
   const { data, error } = await supabase
     .from("recipe_ingredient")
-    .select(`
+    .select(
+      `
       ingredient:ingredient_id(name), 
       quantity, 
       unit:unit_id(name, abbreviation)
-    `)
+    `
+    )
     .eq("recipe_id", recipe_id);
 
   if (error) {
@@ -44,7 +51,9 @@ export const fetchIngredientsForRecipe = async (recipe_id: number): Promise<Reci
 };
 
 // fetch steps for a given recipe
-export const fetchStepsForRecipe = async (recipe_id: number): Promise<RecipeStep[]> => {
+export const fetchStepsForRecipe = async (
+  recipe_id: number
+): Promise<RecipeStep[]> => {
   const { data, error } = await supabase
     .from("recipe_step")
     .select("*")

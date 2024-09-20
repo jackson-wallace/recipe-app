@@ -64,7 +64,7 @@ export type Recipe = {
 export type RecipeIngredient = {
   recipe_id: number;
   ingredient_id: number;
-  ingredient_name : string;
+  ingredient_name: string;
   quantity: number;
   unit_name: string;
   unit_abbreviation: string;
@@ -74,7 +74,7 @@ export type RecipeIngredient = {
 export type RecipeStep = {
   id: number;
   recipe_id: number;
-  step_number: number; 
+  step_number: number;
   instruction: string;
 };
 
@@ -94,9 +94,8 @@ export type Review = {
 export type Ingredient = {
   id: number;
   name: string;
-  abbreviation : string;
+  abbreviation: string;
 };
-
 
 // Tags Table
 export type Tag = {
@@ -107,7 +106,7 @@ export type Tag = {
 
 // Books (Lists) Table
 export type Book = {
-  book_id: number;
+  id: number;
   user_id: number; // Creator of the list
   name: string;
   description?: string;
