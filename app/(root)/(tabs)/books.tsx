@@ -44,21 +44,17 @@ export default function BooksTab() {
   // ex: .eq("user_id", session?.user.id)
   // roger. makes me do session?.user?.id
   // yeah thats chill
-  useEffect(() => {
-    async function loadBooks() {
-      if (!session?.user?.id) return;
-
-      setLoading(true);
-
-      // Fetch non-default books for the user
-      const books = await fetchCustomBooks(session?.user?.id);
+  const loadBooks = async () => {
+    if (!session?.user?.id) return;
+    setLoading(true);
+    const books = await fetchCustomBooks(session?.user?.id);
       // should add an updated_at column to the books table so that we can sort by recents
       console.log(JSON.stringify(books, null, 2));
-      setCustomBooks(books);
+    setCustomBooks(books);
+    setLoading(false);
+  };
 
-      setLoading(false);
-    }
-
+  useEffect(() => {
     loadBooks();
   }, [session]);
 
@@ -75,6 +71,8 @@ export default function BooksTab() {
       await addNewBook(session.user.id, newBookName); // Pass the user ID and book name
       setNewBookModalVisible(false); // Close the modal after adding the book
       setNewBookName(""); // Reset the input field
+      loadBooks();
+
     } catch (error) {
       console.error("Error adding new book:", error);
     }
@@ -185,7 +183,7 @@ export default function BooksTab() {
                 <View className="flex flex-col justify-center ml-2">
                   <Text className="font-bold text-md">{book.name}</Text>
                   <Text className="text-sm opacity-50 text-base-content">
-                    {book.num_recipes || 0} recipes
+                    {book.num_recipes || 0} recipes • {book.author}
                   </Text>
                 </View>
               </TouchableOpacity>

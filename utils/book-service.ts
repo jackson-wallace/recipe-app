@@ -6,18 +6,20 @@ export async function fetchUserBooks(userId: string) {
       .from("book")
       .select(`
         *,
+        users (username),
         book_recipe (recipe_id)
       `)
       .eq("user_id", userId);
   
     if (error) {
-      console.error("Error fetching books with recipe count:", error);
+      console.error("Error fetching books:", error);
       return [];
     }
   
     // Count the number of recipes per book based on the `book_recipe` relationship
     const booksWithRecipeCount = data.map(book => ({
       ...book,
+      author : book.users.username,
       num_recipes: book.book_recipe.length,  // Count the recipes from the `book_recipe` relationship
     }));
   
@@ -30,24 +32,26 @@ export async function fetchDefaultBooks(userId: string) {
       .from("book")
       .select(`
         *,
+        users (username),
         book_recipe (recipe_id)
       `)
       .eq("user_id", userId)
       .eq("is_default", true);  // Only select custom (non-default) books
   
     if (error) {
-      console.error("Error fetching custom books with recipe count:", error);
+      console.error("Error fetching default books", error);
       return [];
     }
   
     // Count the number of recipes per book based on the `book_recipe` relationship
     const customBooksWithRecipeCount = data.map(book => ({
       ...book,
+      author : book.users.username,
       num_recipes: book.book_recipe.length,  // Count the recipes from the `book_recipe` relationship
     }));
-  
     return customBooksWithRecipeCount;
   }
+  
   
 
 // Fetch the default books for the current user (Want To Make, Made, Keepers)
@@ -56,19 +60,21 @@ export async function fetchCustomBooks(userId: string) {
       .from("book")
       .select(`
         *,
+        users (username),
         book_recipe (recipe_id)
       `)
       .eq("user_id", userId)
       .eq("is_default", false);  // Only select custom (non-default) books
   
     if (error) {
-      console.error("Error fetching custom books with recipe count:", error);
+      console.error("Error fetching custom books:", error);
       return [];
     }
   
     // Count the number of recipes per book based on the `book_recipe` relationship
     const customBooksWithRecipeCount = data.map(book => ({
       ...book,
+      author : book.users.username,
       num_recipes: book.book_recipe.length,  // Count the recipes from the `book_recipe` relationship
     }));
     return customBooksWithRecipeCount;
@@ -91,6 +97,6 @@ export async function addNewBook(userId: string, bookName: string) {
     console.error("Error adding new book:", error);
     return null;
   }
-  console.log("Successfully inserted a new book. \nBook details:")
+  console.log("Successfully inserted a new book. \nBook name: " + bookName);
   return data;
 }
