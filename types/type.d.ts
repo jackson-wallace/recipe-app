@@ -51,11 +51,11 @@ export type Follower = {
 // Recipes Table
 export type Recipe = {
   id: number;
-  user_id: number; // Creator of the recipe
+  author_id: number; // Creator of the recipe
+  author: string; //username
   name: string;
   preparation_time: number; // In minutes
   servings: number;
-  picture?: string;
   created_at: string; // ISO Date string
   image_url?: string;
 };
