@@ -72,3 +72,17 @@ export const fetchStepsForRecipe = async (
     instruction: step.instruction,
   }));
 };
+
+
+// Fetch recipes for a given book ID and include the author's username
+export async function fetchRecipesByBookId(bookId: number): Promise<Recipe[]> {
+  const { data, error } = await supabase
+    .rpc('get_recipes_for_book', { book_id: bookId }); // You can create a stored procedure for this
+
+  if (error) {
+    console.error("Error fetching recipes for book:", error);
+    return [];
+  }
+
+  return data; // This will be the raw data mapped to your Recipe type
+}
